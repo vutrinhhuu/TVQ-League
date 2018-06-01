@@ -1,3 +1,12 @@
+<?php
+    $ok=0;
+    session_start();
+    if($_SESSION != NULL) {
+        if($_SESSION['user'] == "votuan921@gmail.com") {
+            $ok = 1;
+        }
+    }
+?>
 <!DOCTYPE html>
 <html xmlns="http://www.w3.org/1999/xhtml">
 <head>
@@ -99,18 +108,23 @@ $(document).ready(function () {
                 <a class="dropdown-toggle" data-toggle="dropdown" href="#">Results <b class="caret"></b></a>
                 <ul class="dropdown-menu">
                     <li><a href="results.php">Match results</a></li>
-                    <li><a href="#">Top scored</a></li>
+                    <li><a href="top_scorers.php">Top scorers</a></li>
                 </ul>
             </li>
-           <li><a href="#">Fixtures</a></li>
-           <li><a href="#">Table</a></li>
+           <li><a href="fixture.php">Fixtures</a></li>
+           <li><a href="table.php">Table</a></li>
             <li class="active"><a href="club.php">Clubs</a></li>
             <li><a href="player.php">Players</a></li>
             <li><a href="all_manager.php">Managers</a></li>
             <li><a href="referee.php">Referees</a></li>
-             <li><a href="#">Contact</a></li>
-
-            <li><button class="btn" type="button">Sign in</button></li>
+             <li><a href="contact.php">Contact</a></li>
+              <?php if($ok) {
+                echo "<li><button class='btn btn-small' type='button'>Admin</button></li>";
+                echo "<li style='margin-left: 3px;'><button class='btn btn-warning btn-small' id='logout' type='button'>Log out</button></li>";
+            } else {
+                echo "<li><button class='btn' type='button' id='login'>Sign in</button></li>";
+            }
+            ?>
             </ul>
 
            
@@ -153,10 +167,10 @@ $(document).ready(function () {
             <div class="span8">
             </div>
                 <div class="span4">
-            <form class="form-search">
+            <form class="form-search" action="search.php">
             <div class="input-append">
-                <input type="text" class="span3 search-query" placeholder="Search for clubs or players">
-                <button type="submit" class="btn"><i class="icon-search"></i></button>
+                <input type="text" class="span3 search-query" name="searchtext" placeholder="Search for clubs or players">
+                <button type="submit" name="ok" class="btn"><i class="icon-search"></i></button>
             </form>
         </div>
         </div>
@@ -170,8 +184,12 @@ $(document).ready(function () {
 
         $sql_clb = "SELECT *
             FROM svd, clb
-            WHERE  svd.MSSVD = clb.MSSVD ";
-            $query = mysql_query($sql_clb);
+            WHERE  svd.\"MSSVD\" = clb.\"MSSVD\" ";
+            //$query = mysql_query($sql_clb);
+            $sth=$db->prepare($sql_clb);
+            $sth->setFetchMode(PDO::FETCH_ASSOC);
+            $sth->execute();
+            $result=$sth->fetchAll();
     ?>
         <div class="span12">
             <h3 class="title-bg">All Clubs 
@@ -183,7 +201,7 @@ $(document).ready(function () {
             <div class="row clearfix no-margin">
             <ul class="gallery-post-grid holder">
                 <?php
-                while($clb = mysql_fetch_array($query)) {   
+                foreach($result as $clb) {   
                 ?>
                     <!-- Gallery Item 1 -->
                     <li  class="span3 gallery-item" data-id="id-1" data-type="illustration">
@@ -233,3 +251,13 @@ $(document).ready(function () {
     
 </body>
 </html>
+<script>
+    $('#login').click(function() {
+        location.href = "admin/pages/login.php";
+    });
+    $('#logout').click(function() {
+        location.href = "admin/pages/logout.php";
+    });
+    
+
+</script>

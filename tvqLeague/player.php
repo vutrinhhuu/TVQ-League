@@ -1,4 +1,13 @@
-<!DOCTYPE html>
+<?php
+    $ok=0;
+    session_start();
+    if($_SESSION != NULL) {
+        if($_SESSION['user'] == "votuan921@gmail.com") {
+            $ok=1;
+            header('Location: player_edit.php');
+        }
+    }
+?><!DOCTYPE html>
 <html xmlns="http://www.w3.org/1999/xhtml">
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
@@ -69,18 +78,23 @@
                 <a class="dropdown-toggle" data-toggle="dropdown" href="#">Results <b class="caret"></b></a>
                 <ul class="dropdown-menu">
                     <li><a href="results.php">Match results</a></li>
-                    <li><a href="#">Top scored</a></li>
+                    <li><a href="top_scorers.php">Top scorers</a></li>
                 </ul>
             </li>
-           <li><a href="#">Fixtures</a></li>
-           <li><a href="#">Table</a></li>
+           <li><a href="fixture.php">Fixtures</a></li>
+           <li><a href="table.php">Table</a></li>
             <li><a href="club.php">Clubs</a></li>
             <li class="active"><a href="player.php">Players</a></li>
             <li><a href="all_manager.php">Managers</a></li>
             <li><a href="referee.php">Referees</a></li>
-             <li><a href="#">Contact</a></li>
-
-            <li><button class="btn" type="button">Sign in</button></li>
+             <li><a href="contact.php">Contact</a></li>
+               <?php if($ok) {
+                echo "<li><button class='btn btn-small' type='button'>Admin</button></li>";
+                echo "<li style='margin-left: 3px;'><button class='btn btn-warning btn-small' id='logout' type='button'>Log out</button></li>";
+            } else {
+                echo "<li><button class='btn' type='button' id='login'>Sign in</button></li>";
+            }
+            ?>
             </ul>
 
            
@@ -123,11 +137,12 @@
             <div class="span8">
             </div>
                 <div class="span4">
-            <form class="form-search">
+            <form class="form-search" action="search.php">
             <div class="input-append">
-                <input type="text" class="span3 search-query" placeholder="Search for clubs or players">
-                <button type="submit" class="btn"><i class="icon-search"></i></button>
+                <input type="text" class="span3 search-query" name="searchtext" placeholder="Search for clubs or players">
+                <button type="submit" name="ok" class="btn"><i class="icon-search"></i></button>
             </form>
+
         </div>
         </div>
         
@@ -149,11 +164,14 @@
             }
             $sql_player = "SELECT *
             FROM cauthu, quoctich, clb
-            WHERE cauthu.QUOCTICH = quoctich.QUOCTICH 
-            AND cauthu.MSCLB = clb.MSCLB
-            ORDER BY TENCAUTHU ASC
-            LIMIT $page1, 18";
-            $query = mysql_query($sql_player);
+            WHERE cauthu.\"QUOCTICH\" = quoctich.\"QUOCTICH\" 
+            AND cauthu.\"MSCLB\" = clb.\"MSCLB\"
+            ORDER BY \"TENCAUTHU\" ASC
+            LIMIT 18 OFFSET $page1";
+            $sth=$db->prepare($sql_player);
+            $sth->setFetchMode(PDO::FETCH_ASSOC);
+            $sth->execute();
+            $result=$sth->fetchAll();
         ?>
 
         <!-- Gallery Items
@@ -165,7 +183,7 @@
             <div class="row clearfix">
                 <ul class="gallery-post-grid holder">
                 <?php
-                    while($cauthu = mysql_fetch_array($query)) {
+                    foreach($result as $cauthu) {
                 ?>
 
                     <!-- Gallery Item 1 -->
@@ -201,8 +219,8 @@
                 }
                 ?>
                 <?php
-                    $sql_page = mysql_query("SELECT * FROM cauthu");
-                    $count = mysql_num_rows($sql_page);
+                    $sql_page = $db->query("SELECT * FROM cauthu");
+                    $count = $sql_page->rowCount($sql_page);
                     $a = ceil($count/18);
                     for($b=1; $b<=$a; $b++){
                 ?>
@@ -279,3 +297,13 @@
 </body>
 </html>
 
+<script>
+    $('#login').click(function() {
+        location.href = "admin/pages/login.php";
+    });
+    $('#logout').click(function() {
+        location.href = "admin/pages/logout.php";
+    });
+    
+
+</script>

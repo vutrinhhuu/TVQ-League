@@ -1,3 +1,13 @@
+<?php
+    $ok=0;
+    session_start();
+    if($_SESSION != NULL) {
+        if($_SESSION['user'] == "votuan921@gmail.com") {
+            $ok=1;
+            header('Location: manager_profile_edit.php?&id='.$_GET['id']);
+        }
+    }
+?>
 <!DOCTYPE html>
 <html xmlns="http://www.w3.org/1999/xhtml">
 <head>
@@ -99,18 +109,24 @@ $(document).ready(function () {
                 <a class="dropdown-toggle" data-toggle="dropdown" href="#">Results <b class="caret"></b></a>
                 <ul class="dropdown-menu">
                     <li><a href="results.php">Match results</a></li>
-                    <li><a href="#">Top scored</a></li>
+                    <li><a href="top_scorers.php">Top scorers</a></li>
                 </ul>
             </li>
-           <li><a href="#">Fixtures</a></li>
-           <li><a href="#">Table</a></li>
+           <li><a href="fixture.php">Fixtures</a></li>
+           <li><a href="table.php">Table</a></li>
             <li><a href="club.php">Clubs</a></li>
             <li><a href="player.php">Players</a></li>
             <li class="active"><a href="all_manager.php">Managers</a></li>
             <li><a href="referee.php">Referees</a></li>
-             <li><a href="#">Contact</a></li>
+             <li><a href="contact.php">Contact</a></li>
 
-            <li><button class="btn" type="button">Sign in</button></li>
+            <?php if($ok) {
+                echo "<li><button class='btn btn-small' type='button'>Admin</button></li>";
+                echo "<li style='margin-left: 3px;'><button class='btn btn-warning btn-small' id='logout' type='button'>Log out</button></li>";
+            } else {
+                echo "<li><button class='btn' type='button' id='login'>Sign in</button></li>";
+            }
+            ?>
             </ul>
 
            
@@ -153,11 +169,12 @@ $(document).ready(function () {
             <div class="span8">
             </div>
                 <div class="span4">
-            <form class="form-search">
+            <form class="form-search" action="search.php">
             <div class="input-append">
-                <input type="text" class="span3 search-query" placeholder="Search for clubs or players">
-                <button type="submit" class="btn"><i class="icon-search"></i></button>
+                <input type="text" class="span3 search-query" name="searchtext" placeholder="Search for clubs or players">
+                <button type="submit" name="ok" class="btn"><i class="icon-search"></i></button>
             </form>
+
         </div>
         </div>
         
@@ -165,12 +182,16 @@ $(document).ready(function () {
 
           <div class="row">
             <?php
-                $sql_manager = "SELECT bhl.*, quoctich.*, clb.* , YEAR(CURRENT_DATE)-YEAR(bhl.NGAYSINH) AS tuoi, DATE_FORMAT(bhl.NGAYSINH, '%d/%m/%Y') AS birth
+                $sql_manager = "SELECT bhl.*, quoctich.*, clb.* , extract(year from current_date)-extract(year from bhl.\"NGAYSINH\") AS tuoi,
+                extract(year from bhl.\"NGAYSINH\") as year,extract(month from \"NGAYSINH\") as month, extract(day from \"NGAYSINH\") as day  
                 FROM bhl, quoctich, clb
-                WHERE bhl.MSHL = '$_GET[id]'
-                AND bhl.QUOCTICH = quoctich.QUOCTICH  
-                AND bhl.MSCLB = clb.MSCLB";
-                $query = mysql_query($sql_manager);
+                WHERE bhl.\"MSHL\" = '$_GET[id]'
+                AND bhl.\"QUOCTICH\" = quoctich.\"QUOCTICH\"  
+                AND bhl.\"MSCLB\" = clb.\"MSCLB\"";
+                //$query = mysql_query($sql_manager);
+                $sth=$db->prepare($sql_manager);
+                $sth->execute();
+                $hlv=$sth->fetch(PDO::FETCH_ASSOC);
             ?>
 
         <!-- Manager
@@ -178,9 +199,6 @@ $(document).ready(function () {
         <div class="span12 gallery-single">
 
             <div class="row">
-                <?php
-                    $hlv = mysql_fetch_array($query);
-                ?>
                 <div class="span5">
                     <img src="img/manager/<?php echo $hlv['HINHANH'] ?>"  alt="Manager" width="350px" height="350px">
                 </div>
@@ -193,7 +211,7 @@ $(document).ready(function () {
                         <li><h6>Club:</h6> <img src="img/bigLogo/<?php echo $hlv['LOGO'] ?>" width="25px" height="25px" > &ensp;<?php echo $hlv['TENCLB'] ?></li>
                         <li><h6>Role:</h6> <?php echo $hlv['VAITRO'] ?></li>
                         <li><h6>Age:</h6> <?php echo $hlv['tuoi'] ?></li>
-                        <li><h6>Date of birth:</h6> <?php echo $hlv['birth'] ?></li>
+                        <li><h6>Date of birth:</h6> <?php echo $hlv['day']."/".$hlv['month']."/".$hlv['year'] ?></li>
                     </ul>
 
                     <a href="index.php"><button class="btn btn-inverse pull-left" type="button">Home</button></a>
@@ -204,6 +222,8 @@ $(document).ready(function () {
         </div><!-- End gallery-single-->
 
     </div><!-- End container row -->
+
+</div> <!-- End Container -->
 
 
 

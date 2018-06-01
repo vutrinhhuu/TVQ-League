@@ -1,3 +1,12 @@
+<?php
+    $ok = 0;
+    session_start();
+    if($_SESSION != NULL) {
+        if($_SESSION['user'] == "votuan921@gmail.com") {
+            $ok = 1;
+        }
+    }
+?>
 <!DOCTYPE html>
 <html xmlns="http://www.w3.org/1999/xhtml">
 <head>
@@ -81,14 +90,14 @@ $(document).ready(function () {
       
         <!-- Logo
         ================================================== -->
-        <div class="span4 logo">
+        <div class="span3 logo">
         	<a href="index.php"><h1>TVQ League</h1></a>
             
         </div>
         
         <!-- Main Navigation
         ================================================== -->
-        <div class="span8 navigation">
+        <div class="span9 navigation">
             <div class="navbar hidden-phone">
             
             <ul class="nav">
@@ -99,18 +108,24 @@ $(document).ready(function () {
                 <a class="dropdown-toggle" data-toggle="dropdown" href="#">Results <b class="caret"></b></a>
                 <ul class="dropdown-menu">
                     <li><a href="results.php">Match results</a></li>
-                    <li><a href="#">Top scored</a></li>
+                    <li><a href="top_scorers.php">Top scorers</a></li>
                 </ul>
             </li>
-           <li><a href="#">Fixtures</a></li>
-           <li><a href="#">Table</a></li>
+           <li><a href="fixture.php">Fixtures</a></li>
+           <li><a href="table.php">Table</a></li>
             <li><a href="club.php">Clubs</a></li>
             <li><a href="player.php">Players</a></li>
             <li><a href="all_manager.php">Managers</a></li>
             <li><a href="referee.php">Referees</a></li>
-             <li><a href="#">Contact</a></li>
+             <li><a href="contact.php">Contact</a></li>
 
-            <li><button class="btn" type="button">Sign in</button></li>
+            <?php if($ok) {
+                echo "<li><button class='btn btn-small' type='button'>Admin</button></li>";
+                echo "<li style='margin-left: 3px;'><button class='btn btn-warning btn-small' id='logout' type='button'>Log out</button></li>";
+            } else {
+                echo "<li><button class='btn' type='button' id='login'>Sign in</button></li>";
+            }
+            ?>
             </ul>
 
            
@@ -153,11 +168,12 @@ $(document).ready(function () {
             <div class="span8">
             </div>
                 <div class="span4">
-            <form class="form-search">
+            <form class="form-search" action="search.php">
             <div class="input-append">
-                <input class="span3" id="appendedInputButtons" name="searchtext" size="16" type="text">
-                <a href="search.php?&searchtext=<?php echo $_POST['searchtext'] ?>&search=submit"><button class="btn" name="search" type="button"><i class="icon-search"></i></button></a>
+                <input type="text" class="span3 search-query" name="searchtext" placeholder="Search for clubs or players">
+                <button type="submit" name="ok" class="btn"><i class="icon-search"></i></button>
             </form>
+
         </div>
         </div>
         
@@ -183,7 +199,7 @@ $(document).ready(function () {
         <div class="span4">
         	<h3>Welcome to TVQ League. <br /></h3>
             <p class="lead">You can see latest match's result or our clubs and players's details.</p>
-            <p>Cras rutrum, massa non blandit convallis, est lacus gravida enim, eu fermentum ligula orci et tortor. In sit amet nisl ac leo pulvinar molestie. Morbi blandit ultricies ultrices.</p>
+            <p>The game of life is a lot like football. You have to tackle your problems, block your fears and score your points when you get the opportunity.</p>
             <a href="#"><i class="icon-plus-sign"></i>Read More</a> 
         </div>
     </div><!-- End Headline -->
@@ -193,8 +209,12 @@ $(document).ready(function () {
 
         $sql_clb = "SELECT *
             FROM svd, clb
-            WHERE  svd.MSSVD = clb.MSSVD ";
-            $query = mysql_query($sql_clb);
+            WHERE  svd.\"MSSVD\" = clb.\"MSSVD\" ";
+            $sth=$db->prepare($sql_clb);
+            $sth->setFetchMode(PDO::FETCH_ASSOC);
+            $sth->execute();
+            $result=$sth->fetchAll();
+
     ?>
     	<div class="span12">
             <h3 class="title-bg">All Clubs 
@@ -206,7 +226,7 @@ $(document).ready(function () {
             <div class="row clearfix no-margin">
             <ul class="gallery-post-grid holder">
                 <?php
-                while($clb = mysql_fetch_array($query)) {   
+                foreach($result as $clb) {   
                 ?>
                     <!-- Gallery Item 1 -->
                     <li  class="span3 gallery-item" data-id="id-1" data-type="illustration">
@@ -230,12 +250,16 @@ $(document).ready(function () {
     <div class="row"><!-- Begin Bottom Section -->
     <?php
 
-        $sql_result = "SELECT chu.MSCLB AS masochu, khach.MSCLB AS masokhach, trandau.BANTHANGCHU AS banthangchu, trandau.BANTHANGKHACH banthangkhach, chu.LOGO logochu, khach.LOGO logokhach, lichthidau.NGAYDAU ngaydau
+        $sql_result = "SELECT *, chu.\"MSCLB\" AS masochu, khach.\"MSCLB\" AS masokhach, trandau.\"BANTHANGCHU\" AS banthangchu, trandau.\"BANTHANGKHACH\" banthangkhach, chu.\"LOGO\" logochu, khach.\"LOGO\" logokhach, lichthidau.\"NGAYDAU\" ngaydau
             FROM trandau,lichthidau,clb AS chu, clb AS khach
-            WHERE  trandau.MSTRANDAU = lichthidau.MSTRANDAU 
-            AND lichthidau.MSCHU = chu.MSCLB
-            AND lichthidau.MSKHACH = khach.MSCLB";
-            $query = mysql_query($sql_result);
+            WHERE  trandau.\"MSTRANDAU\" = lichthidau.\"MSTRANDAU\" 
+            AND lichthidau.\"MSCHU\" = chu.\"MSCLB\"
+            AND lichthidau.\"MSKHACH\" = khach.\"MSCLB\"";
+            //$query = mysql_query($sql_result);
+            $sth=$db->prepare($sql_result);
+            $sth->setFetchMode(PDO::FETCH_ASSOC);
+            $sth->execute();
+            $result1=$sth->fetchAll();
     ?>
     	<!-- Blog Preview
         ================================================== -->
@@ -252,11 +276,11 @@ $(document).ready(function () {
         </div>
             <div class="span4">
                 <?php
-                while($result = mysql_fetch_array($query)) {   
+                foreach($result1 as $result ) {   
                 ?>
             <h4 class="title-bg">&emsp;&emsp;&emsp;&emsp; <?php echo $result['masochu'] ?>
                 <img src="img/bigLogo/<?php echo $result['logochu'] ?>" width="30px" height="30px"> 
-                &nbsp;&nbsp;&nbsp;&nbsp; <?php echo $result['banthangchu'] ?>-<?php echo $result['banthangkhach'] ?> &nbsp;&nbsp;&nbsp;&nbsp;
+                &nbsp;&nbsp;&nbsp;&nbsp; <a href="match_data.php?&id=<?php echo $result['MSTRANDAU'] ?>"><?php echo $result['banthangchu'] ?>-<?php echo $result['banthangkhach'] ?></a> &nbsp;&nbsp;&nbsp;&nbsp;
                 <img src="img/bigLogo/<?php echo $result['logokhach'] ?>" width="30px" height="30px"> <?php echo $result['masokhach'] ?> 
             </h4>
             <?php
@@ -276,9 +300,13 @@ $(document).ready(function () {
 
         $sql_table = "SELECT *
             FROM clb,xephang
-            WHERE xephang.MSCLB = clb.MSCLB
-            ORDER BY xephang.DIEMSO DESC, xephang.HIEUSO DESC";
-            $table_query = mysql_query($sql_table);
+            WHERE xephang.\"MSCLB\" = clb.\"MSCLB\"
+            ORDER BY xephang.\"DIEMSO\" DESC, xephang.\"HIEUSO\" DESC";
+            //$table_query = mysql_query($sql_table);
+            $sth=$db->prepare($sql_table);
+            $sth->setFetchMode(PDO::FETCH_ASSOC);
+            $sth->execute();
+            $result=$sth->fetchAll();
             $n = 0
         ?>
             <!-- Client Testimonial Slider-->
@@ -291,7 +319,7 @@ $(document).ready(function () {
 
 
             <?php
-                while($table = mysql_fetch_array($table_query)) {   
+                foreach($result as $table){   
                 ?>
 
                 <div class="span1"><h4><?php $n = $n + 1; echo($n) ?></h4></div>
@@ -338,3 +366,13 @@ $(document).ready(function () {
     
 </body>
 </html>
+<script>
+    $('#login').click(function() {
+        location.href = "admin/pages/login.php";
+    });
+    $('#logout').click(function() {
+        location.href = "admin/pages/logout.php";
+    });
+    
+
+</script>

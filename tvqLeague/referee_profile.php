@@ -1,3 +1,12 @@
+<?php
+    $ok=0;
+    session_start();
+    if($_SESSION != NULL) {
+        if($_SESSION['user'] == "votuan921@gmail.com") {
+            $ok = 1;
+        }
+    }
+?>
 <!DOCTYPE html>
 <html xmlns="http://www.w3.org/1999/xhtml">
 <head>
@@ -99,19 +108,23 @@ $(document).ready(function () {
                 <a class="dropdown-toggle" data-toggle="dropdown" href="#">Results <b class="caret"></b></a>
                 <ul class="dropdown-menu">
                     <li><a href="results.php">Match results</a></li>
-                    <li><a href="#">Top scored</a></li>
+                    <li><a href="top_scorers.php">Top scorers</a></li>
                 </ul>
             </li>
-           <li><a href="#">Fixtures</a></li>
-           <li><a href="#">Table</a></li>
+           <li><a href="fixture.php">Fixtures</a></li>
+           <li><a href="table.php">Table</a></li>
             <li><a href="club.php">Clubs</a></li>
             <li><a href="player.php">Players</a></li>
             <li><a href="all_manager.php">Managers</a></li>
             <li class="active"><a href="referee.php">Referees</a></li>
-             <li><a href="#">Contact</a></li>
-
-
-            <li><button class="btn" type="button">Sign in</button></li>
+             <li><a href="contact.php">Contact</a></li>
+              <?php if($ok) {
+                echo "<li><button class='btn btn-small' type='button'>Admin</button></li>";
+                echo "<li style='margin-left: 3px;'><button class='btn btn-warning btn-small' id='logout' type='button'>Log out</button></li>";
+            } else {
+                echo "<li><button class='btn' type='button' id='login'>Sign in</button></li>";
+            }
+            ?>
             </ul>
 
            
@@ -154,11 +167,13 @@ $(document).ready(function () {
             <div class="span8">
             </div>
                 <div class="span4">
-            <form class="form-search">
+            <form class="form-search" action="search.php">
             <div class="input-append">
-                <input type="text" class="span3 search-query" placeholder="Search for clubs or players">
-                <button type="submit" class="btn"><i class="icon-search"></i></button>
+                <input type="text" class="span3 search-query" name="searchtext" placeholder="Search for clubs or players">
+                <button type="submit" name="ok" class="btn"><i class="icon-search"></i></button>
             </form>
+
+
         </div>
         </div>
         
@@ -166,11 +181,15 @@ $(document).ready(function () {
 
           <div class="row">
             <?php
-                $sql_referee = "SELECT trongtai.*, quoctich.*,YEAR(CURRENT_DATE)-YEAR(trongtai.NGAYSINH) AS tuoi, DATE_FORMAT(trongtai.NGAYSINH, '%d/%m/%Y') AS birth
+                $sql_referee = "SELECT trongtai.*, quoctich.*,extract(year from current_date)-extract(year from trongtai.\"NGAYSINH\") AS tuoi,
+                extract(year from trongtai.\"NGAYSINH\") as year,extract(month from \"NGAYSINH\") as month, extract(day from \"NGAYSINH\") as day
                 FROM trongtai, quoctich
-                WHERE trongtai.QUOCTICH = quoctich.QUOCTICH 
-                AND trongtai.MSTRONGTAI = '$_GET[id]'";
-                $query = mysql_query($sql_referee);
+                WHERE trongtai.\"QUOCTICH\" = quoctich.\"QUOCTICH\" 
+                AND trongtai.\"MSTRONGTAI\" = '$_GET[id]'";
+                //$query = mysql_query($sql_referee);
+                $sth=$db->prepare($sql_referee);
+                $sth->execute();
+                $ref=$sth->fetch(PDO::FETCH_ASSOC);
             ?>
 
         <!-- Manager
@@ -178,9 +197,6 @@ $(document).ready(function () {
         <div class="span12 gallery-single">
 
             <div class="row">
-                <?php
-                    $ref = mysql_fetch_array($query);
-                ?>
                 <div class="span5">
                     <img src="img/referee/<?php echo $ref['HINHANH'] ?>"  alt="Referee" width="350px" height="350px">
                 </div>
@@ -192,7 +208,7 @@ $(document).ready(function () {
                         <li><h6>Nationality:</h6> <img src="img/nationality/<?php echo $ref['FLAG'] ?>" width="30px" height="20px">&ensp; <?php echo $ref['QUOCTICH'] ?></li>
                         <li><h6>Joined:</h6> <?php echo $ref['NAMBD'] ?></li>
                         <li><h6>Age:</h6> <?php echo $ref['tuoi'] ?></li>
-                        <li><h6>Date of birth:</h6> <?php echo $ref['birth'] ?></li>
+                        <li><h6>Date of birth:</h6> <?php echo $ref['day']."/".$ref['month']."/".$ref['year'] ?></li>
                     </ul>
 
                     <a href="."><button class="btn btn-inverse pull-left" type="button">Home</button></a>
@@ -203,6 +219,7 @@ $(document).ready(function () {
         </div><!-- End gallery-single-->
 
     </div><!-- End container row -->
+</div> <!-- End Container -->
 
 
 
@@ -234,3 +251,13 @@ $(document).ready(function () {
 </body>
 </html>
 
+<script>
+    $('#login').click(function() {
+        location.href = "admin/pages/login.php";
+    });
+    $('#logout').click(function() {
+        location.href = "admin/pages/logout.php";
+    });
+    
+
+</script>

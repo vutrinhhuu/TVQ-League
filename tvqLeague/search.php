@@ -1,3 +1,12 @@
+<?php
+    $ok=0;
+    session_start();
+    if($_SESSION != NULL) {
+        if($_SESSION['user'] == "votuan921@gmail.com") {
+            $ok = 1;
+        }
+    }
+?>
 <!DOCTYPE html>
 <html xmlns="http://www.w3.org/1999/xhtml">
 <head>
@@ -62,25 +71,31 @@
             <div class="navbar hidden-phone">
             
             <ul class="nav">
-            <li>
+            <li class="active">
                 <a href="index.php">Home</a>
             </li>
             <li class="dropdown">
                 <a class="dropdown-toggle" data-toggle="dropdown" href="#">Results <b class="caret"></b></a>
                 <ul class="dropdown-menu">
                     <li><a href="results.php">Match results</a></li>
-                    <li><a href="#">Top scored</a></li>
+                    <li><a href="top_scorers.php">Top scorers</a></li>
                 </ul>
             </li>
-           <li><a href="#">Fixtures</a></li>
-           <li><a href="#">Table</a></li>
+           <li><a href="fixture.php">Fixtures</a></li>
+           <li><a href="table.php">Table</a></li>
             <li><a href="club.php">Clubs</a></li>
-            <li class="active"><a href="player.php">Players</a></li>
+            <li><a href="player.php">Players</a></li>
             <li><a href="all_manager.php">Managers</a></li>
             <li><a href="referee.php">Referees</a></li>
-             <li><a href="#">Contact</a></li>
+             <li><a href="contact.php">Contact</a></li>
 
-            <li><button class="btn" type="button">Sign in</button></li>
+            <?php if($ok) {
+                echo "<li><button class='btn btn-small' type='button'>Admin</button></li>";
+                echo "<li style='margin-left: 3px;'><button class='btn btn-warning btn-small' id='logout' type='button'>Log out</button></li>";
+            } else {
+                echo "<li><button class='btn' type='button' id='login'>Sign in</button></li>";
+            }
+            ?>
             </ul>
 
            
@@ -123,40 +138,116 @@
             <div class="span8">
             </div>
                 <div class="span4">
-            <form class="form-search">
+            <form class="form-search" action="search.php">
             <div class="input-append">
-                <input type="text" class="span3 search-query" placeholder="Search for clubs or players">
-                <button type="submit" class="btn"><i class="icon-search"></i></button>
+                <input type="text" class="span3 search-query" name="searchtext" placeholder="Search for clubs or players">
+                <button type="submit" name="ok" class="btn"><i class="icon-search"></i></button>
             </form>
+
         </div>
         </div>
         
       </div><!-- End Header -->
 
+    <div class="row">
+        <div class="span12">
+            <h3 class="title-bg">Club
+            </h3>
+        <?php
+        if(isset($_GET['searchtext'])){
+        $searchtext = $_GET['searchtext'];
+        $sql_clb = "SELECT *
+            FROM svd, clb
+            WHERE  svd.\"MSSVD\" = clb.\"MSSVD\" 
+            AND lower(clb.\"TENCLB\") LIKE '%$searchtext%' ";
+            $query = $db->query($sql_clb);
+            $num = $query->rowCount($query);
+            $sth=$db->prepare($sql_clb);
+            $sth->setFetchMode(PDO::FETCH_ASSOC);
+            $sth->execute();
+            $result1=$sth->fetchAll();
+        if($searchtext == '')
+            {
+        ?>
+        <h5>You have not entered search data yet</h5>
+
+        <?php
+        }else{
+         if($num == 0){
+        ?>
+        <h5>No results have matched your search</h5>
+        <?php
+        }else{
+        ?>
+        <!-- Gallery Items
+        ================================================== -->
+            <div class="row clearfix no-margin">
+            <ul class="gallery-post-grid holder">
+                <?php
+                foreach($result1 as $clb) {   
+                ?>
+                    <!-- Gallery Item 1 -->
+                    <li  class="span3 gallery-item" data-id="id-1" data-type="illustration">
+                        <!--<span class="gallery-hover-4col hidden-phone hidden-tablet">
+                            <span class="gallery-icons">
+                                <a href="club_info.php?&id=<?php echo $clb['MSCLB']?>" class="item-details-link"></a>
+                            </span>
+                        </span>-->
+                        <a href="club_info.php?&id=<?php echo $clb['MSCLB']?>"><img src="img/clubLogo/<?php echo $clb['LOGO'] ?>" alt="Club"></a>
+                        <span class="project-details"><a href="club_info.php?&id=<?php echo $clb['MSCLB']?>"><?php echo $clb['TENCLB'] ?></a>Stadium: <?php echo $clb['TENSVD']?></span>
+                    </li>
+                  <?php
+                    }
+                    ?>
+                </ul>
+                </div>
+                <?php
+                }
+                }
+                }
+                ?>
+            </div>
+        </div>
     <!-- Page Content
     ================================================== --> 
     <div class="row">
-        <?php
-		if(isset($_GET['searchtext'])){
-		$searchtext = $_GET['searchtext']
-		$sql_search="SELECT * 
-				FROM cauthu,quoctich,clb
-				WHERE cauthu.TENCAUTHU LIKE '%$searchtext%' 
-				AND cauthu.MSCLB = clb.MSCLB
-				AND cauthu.QUOCTICH = quoctich.QUOCTICH";
-				$query = mysql_query($sql_search);
-				}
-		?>
-        <!-- Gallery Items
-        ================================================== --> 
-        <div class="span12 gallery">
+        <div class="span12">
             <h3 class="title-bg">Players
             </h3>
+        <?php
+		if(isset($_GET['searchtext'])){
+		$searchtext = $_GET['searchtext'];
+        $sql_player="SELECT * 
+                FROM cauthu,quoctich,clb
+                WHERE lower(cauthu.\"TENCAUTHU\") LIKE '%$searchtext%' 
+                AND cauthu.\"MSCLB\" = clb.\"MSCLB\"
+                AND cauthu.\"QUOCTICH\" = quoctich.\"QUOCTICH\"";
+                $query1 = $db->query($sql_player);
+                $num1= $query1->rowCount($query1);
+                $sth1=$db->prepare($sql_player);
+                $sth1->setFetchMode(PDO::FETCH_ASSOC);
+                $sth1->execute();
+                $result2=$sth1->fetchAll();
+        if($searchtext == '')
+            {
+        ?>
+        <h5>You have not entered search data yet</h5>
+
+        <?php
+        }else{
+         if($num1 == 0){
+		?>
+        <h5>No results have matched your search</h5>
+        <?php
+        }else{
+        ?>
+        <!-- Gallery Items
+        ================================================== -->
 
             <div class="row clearfix">
                 <ul class="gallery-post-grid holder">
                 <?php
-                    while($search = mysql_fetch_array($query)) {
+                    foreach($result2 as $search) {
                 ?>
 
                     <!-- Gallery Item 1 -->
@@ -172,10 +263,79 @@
 
                 </ul>
             </div>
+            <?php
+            }
+            }
+            }
+            ?>
 
         </div><!-- End gallery list-->
+    </div>
 
-    </div><!-- End container row -->
+
+        <div class="row">
+        <div class="span12">
+            <h3 class="title-bg">Managers
+            </h3>
+        <?php
+        if(isset($_GET['searchtext'])){
+        $searchtext = $_GET['searchtext'];
+        $sql_manage="SELECT *
+            FROM bhl, quoctich, clb
+            WHERE bhl.\"QUOCTICH\" = quoctich.\"QUOCTICH\" 
+            AND bhl.\"VAITRO\" = 'Manager' 
+            AND bhl.\"MSCLB\" = clb.\"MSCLB\"
+            AND lower(bhl.\"TENHL\") LIKE '%$searchtext%'";
+                $query2 = $db->query($sql_manage);
+                $num2= $query2->rowCount($query2);
+                $sth2=$db->prepare($sql_manage);
+                $sth2->setFetchMode(PDO::FETCH_ASSOC);
+                $sth2->execute();
+                $result3=$sth2->fetchAll();
+        if($searchtext == '')
+            {
+        ?>
+        <h5>You have not entered search data yet</h5>
+
+        <?php
+        }else{
+         if($num2 == 0){
+        ?>
+        <h5>No results have matched your search</h5>
+        <?php
+        }else{
+        ?>
+        <!-- Gallery Items
+        ================================================== -->
+
+            <div class="row clearfix">
+                <ul class="gallery-post-grid holder">
+                <?php
+                    foreach($result3 as $hlv) {
+                ?>
+
+                    <!-- Gallery Item 1 -->
+                    <li  class="span2 gallery-item" data-id="id-1" data-type="illustration">
+                        <a href="manager_profile.php?&id=<?php echo $hlv['MSHL'] ?>"><img src="img/manager/<?php echo $hlv['HINHANH'] ?>" alt="Manager"></a>
+                        <span class="project-details"><a href="manager_profile.php?&id=<?php echo $hlv['MSHL'] ?>"><?php echo $hlv['TENHL'] ?></a>Club: &ensp;<img src="img/bigLogo/<?php echo $hlv['LOGO'] ?>" width="20px" height="20px"><br>Nationality: &ensp;<img src="img/nationality/<?php echo $hlv['FLAG'] ?>" width="27px" height="18px"></span>
+                    </li>
+                    
+
+                <?php
+                }
+                ?>
+
+                </ul>
+            </div>
+            <?php
+            }
+            }
+            }
+            ?>
+        </div>
+    </div>
+
+
     
     </div> <!-- End Container -->
 
@@ -208,3 +368,13 @@
     
 </body>
 </html>
+<script>
+    $('#login').click(function() {
+        location.href = "admin/pages/login.php";
+    });
+    $('#logout').click(function() {
+        location.href = "admin/pages/logout.php";
+    });
+    
+
+</script>

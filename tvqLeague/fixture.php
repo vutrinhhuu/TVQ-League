@@ -1,3 +1,12 @@
+<?php
+    $ok=0;
+    session_start();
+    if($_SESSION != NULL) {
+        if($_SESSION['user'] == "votuan921@gmail.com") {
+            $ok = 1;
+        }
+    }
+?>
 <!DOCTYPE html>
 <html xmlns="http://www.w3.org/1999/xhtml">
 <head>
@@ -87,19 +96,23 @@
                 <a class="dropdown-toggle" data-toggle="dropdown" href="#">Results <b class="caret"></b></a>
                 <ul class="dropdown-menu">
                     <li><a href="results.php">Match results</a></li>
-                    <li><a href="#">Top scored</a></li>
+                    <li><a href="top_scorers.php">Top scorers</a></li>
                 </ul>
             </li>
-           <li class="active"><a href="#">Fixtures</a></li>
-           <li><a href="#">Table</a></li>
+           <li class="active"><a href="fixture.php">Fixtures</a></li>
+           <li><a href="table.php">Table</a></li>
             <li><a href="club.php">Clubs</a></li>
             <li><a href="player.php">Players</a></li>
             <li><a href="all_manager.php">Managers</a></li>
             <li><a href="referee.php">Referees</a></li>
-             <li><a href="#">Contact</a></li>
-
-
-            <li><button class="btn" type="button">Sign in</button></li>
+             <li><a href="contact.php">Contact</a></li>
+             <?php if($ok) {
+                echo "<li><button class='btn btn-small' type='button'>Admin</button></li>";
+                echo "<li style='margin-left: 3px;'><button class='btn btn-warning btn-small' id='logout' type='button'>Log out</button></li>";
+            } else {
+                echo "<li><button class='btn' type='button' id='login'>Sign in</button></li>";
+            }
+            ?>
             </ul>
 
            
@@ -142,11 +155,12 @@
             <div class="span8">
             </div>
                 <div class="span4">
-            <form class="form-search">
+            <form class="form-search" action="search.php">
             <div class="input-append">
-                <input type="text" class="span3 search-query" placeholder="Search for clubs or players">
-                <button type="submit" class="btn"><i class="icon-search"></i></button>
+                <input type="text" class="span3 search-query" name="searchtext" placeholder="Search for clubs or players">
+                <button type="submit" name="ok" class="btn"><i class="icon-search"></i></button>
             </form>
+
         </div>
         </div>
         
@@ -157,11 +171,15 @@
     ================================================== --> 
     <div class="row">
         <?php
-        $sql_date = "SELECT DISTINCT NGAYDAU, DAYNAME(lichthidau.NGAYDAU) AS dayname, DAY(lichthidau.NGAYDAU) AS day, MONTHNAME(lichthidau.NGAYDAU) AS month
+        $sql_date = "SELECT DISTINCT \"NGAYDAU\", DATE_PART('day',lichthidau.\"NGAYDAU\") AS day, DATE_PART('month',lichthidau.\"NGAYDAU\") AS month, DATE_PART('year',lichthidau.\"NGAYDAU\") AS year,\"VONGDAU\"
             FROM lichthidau
-            WHERE lichthidau.GHICHU = ''
-            ORDER BY NGAYDAU DESC";
-            $query = mysql_query($sql_date);
+            WHERE lichthidau.\"GHICHU\" = ''
+            ORDER BY \"NGAYDAU\" ASC
+            LIMIT 10";
+            $sth=$db->prepare($sql_date);
+            $sth->setFetchMode(PDO::FETCH_ASSOC);
+            $sth->execute();
+            $result=$sth->fetchAll();
         ?>
 
 
@@ -170,29 +188,36 @@
         <div class="span12">
             <h3 class="title-bg">Fixtures</h3>
             <?php
-                while($date = mysql_fetch_array($query)) {
+                foreach($result as $date) {
             ?>
             <div class="span11">
-                <h5><?php echo $date['dayname']?> <?php echo $date['day'] ?> <?php echo $date['month'] ?></h5>
+                <h5><?php echo $date['day']." - ".$date['month']." - ".$date['year']?> / <small>Round <?php echo $date['VONGDAU'] ?></small></h5>
             </div>
             <?php
                 $ngay = $date['NGAYDAU'];
-                $sql_result = "SELECT *, chu.LOGO logochu, khach.LOGO logokhach, chu.TRUSO AS city,TIME_FORMAT(lichthidau.GIODAU, '%H:%i') AS time
+                $sql_result = "SELECT *, chu.\"LOGO\" logochu, khach.\"LOGO\" logokhach, chu.\"TRUSO\" AS city,extract(hour from lichthidau.\"GIODAU\") as hour,extract(minute from lichthidau.\"GIODAU\") as minute
                 FROM lichthidau,clb AS chu, clb AS khach, svd
-                WHERE lichthidau.MSCHU = chu.MSCLB
-                AND lichthidau.MSKHACH = khach.MSCLB
-                AND lichthidau.MSSVD = svd.MSSVD
-                AND lichthidau.GHICHU = ''
-                AND lichthidau.NGAYDAU = '$ngay' ";
-                $fixture_query = mysql_query($sql_result);
-            ?>
+                WHERE lichthidau.\"MSCHU\" = chu.\"MSCLB\"
+                AND lichthidau.\"MSKHACH\" = khach.\"MSCLB\"
+                AND lichthidau.\"MSSVD\" = svd.\"MSSVD\"
+                AND lichthidau.\"GHICHU\" = ''
+                AND lichthidau.\"NGAYDAU\" = '$ngay' ";
+                $sth1=$db->prepare($sql_result);
+                $sth1->setFetchMode(PDO::FETCH_ASSOC);
+                $sth1->execute();
+                $result1=$sth1->fetchAll();
+                ?>
             <?php
-                while($fixture = mysql_fetch_array($fixture_query)) {
+                foreach($result1 as $fixture) {
             ?>
             <div class="span11">
                 <h4 class="title-bg"><tab3></tab3> <?php echo $fixture['MSCHU'] ?> 
                     <img src="img/bigLogo/<?php echo $fixture['logochu'] ?>" width="30px" height="30px"> 
-                        &nbsp;&nbsp;&nbsp;&nbsp;<a href="#"> <?php echo $fixture['time'] ?> </a>&nbsp;&nbsp;&nbsp;&nbsp;
+                        &nbsp;&nbsp;&nbsp;&nbsp;<a href="#"> <?php echo $fixture['hour']." : "; if ($fixture['minute']==0) {
+                            echo "00";
+                        }else{
+                            echo $fixture['minute'];
+                        }?></a>&nbsp;&nbsp;&nbsp;&nbsp;
                     <img src="img/bigLogo/<?php echo $fixture['logokhach'] ?>" width="30px" height="30px"> <?php echo $fixture['MSKHACH'] ?> <tab3></tab3>
                     <small><i class="icon-map-marker"></i>
                         <i><?php echo $fixture['TENSVD'] ?>, <?php echo $fixture['city'] ?></i>
@@ -240,4 +265,13 @@
     
 </body>
 </html>
+<script>
+    $('#login').click(function() {
+        location.href = "admin/pages/login.php";
+    });
+    $('#logout').click(function() {
+        location.href = "admin/pages/logout.php";
+    });
+    
 
+</script>
